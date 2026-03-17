@@ -1,0 +1,61 @@
+---
+---
+
+<header>
+  <nav>
+    <div class="internal-links">
+      <a href="/">Home</a>
+      <a href="/blog">Blog</a>
+      <a href="/about">About</a>
+    </div>
+    <div class="social-links">
+      <a href="/rss.xml" title="RSS Feed">
+        <span class="sr-only">RSS Feed</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 256 256">
+          <path d="M200,224a8,8,0,0,1-8,8H160a8,8,0,0,1-8-8,120.13,120.13,0,0,0-120-120,8,8,0,0,1-8-8V64a8,8,0,0,1,8-8A184.18,184.18,0,0,1,208,240,8,8,0,0,1,200,224Zm-96,0a8,8,0,0,1-8,8H64a8,8,0,0,1-8-8,72.08,72.08,0,0,0-72-72,8,8,0,0,1-8-8V112a8,8,0,0,1,8-8A136.15,136.15,0,0,1,120,240,8,8,0,0,1,104,224ZM72,224a8,8,0,0,1-8,8H32a8,8,0,0,1-8-8v-8a24,24,0,0,1,24-24h8a8,8,0,0,1,8,8Z" fill="currentColor"/>
+        </svg>
+      </a>
+    </div>
+  </nav>
+</header>
+
+<style>
+  header {
+    margin: 0;
+    padding: 0 1em;
+    background: white;
+    box-shadow: 0 2px 8px rgba(var(--black), 5%);
+  }
+  h2 {
+    margin: 0;
+    font-size: 1em;
+  }
+  h2 a,
+  h2 a.active {
+    text-decoration: none;
+  }
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  nav a {
+    padding: 1em 0.5em;
+    color: var(--black);
+    border-bottom: 4px solid transparent;
+    text-decoration: none;
+  }
+  nav a.active {
+    text-decoration: none;
+    border-bottom-color: var(--accent);
+  }
+  .social-links,
+  .social-links a {
+    display: flex;
+  }
+  @media (max-width: 720px) {
+    .social-links {
+      display: none;
+    }
+  }
+</style>

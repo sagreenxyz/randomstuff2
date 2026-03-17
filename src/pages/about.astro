@@ -1,0 +1,53 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { SITE_TITLE } from '../consts';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead
+      title={`About | ${SITE_TITLE}`}
+      description="About SAGreenXYZ — developer, writer, and lifelong learner."
+    />
+    <style>
+      main {
+        width: 720px;
+        max-width: calc(100% - 2em);
+        margin: auto;
+        padding: 3em 1em;
+      }
+    </style>
+  </head>
+  <body>
+    <Header />
+    <main>
+      <h1>About</h1>
+      <p>
+        Hi! I'm SAGreenXYZ — a developer, writer, and lifelong learner. This site is my personal
+        space to share what I'm working on, thinking about, and learning.
+      </p>
+      <h2>What's Here</h2>
+      <ul>
+        <li>
+          <strong>Blog</strong> — posts on software development, tools, and ideas
+        </li>
+        <li>
+          <strong>Portfolio</strong> — project showcases and case studies (coming soon)
+        </li>
+        <li>
+          <strong>Knowledge Base</strong> — in-depth articles on topics I explore (coming soon)
+        </li>
+      </ul>
+      <h2>Tech Stack</h2>
+      <p>
+        This site is built with <a href="https://astro.build">Astro</a> and deployed on{' '}
+        <a href="https://pages.github.com">GitHub Pages</a>. Source code is available on{' '}
+        <a href="https://github.com/sagreenxyz/randomstuff2">GitHub</a>.
+      </p>
+    </main>
+    <Footer />
+  </body>
+</html>
