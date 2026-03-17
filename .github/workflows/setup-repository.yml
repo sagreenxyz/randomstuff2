@@ -1,0 +1,378 @@
+name: Setup Repository
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "setup" to confirm repository setup (this will create labels, milestones, and issues)'
+        required: true
+        default: ''
+
+jobs:
+  setup:
+    name: Create Labels, Milestones & Issues
+    runs-on: ubuntu-latest
+    if: github.event.inputs.confirm == 'setup'
+    permissions:
+      issues: write
+      contents: read
+
+    steps:
+      # -------------------------------------------------------
+      # LABELS
+      # -------------------------------------------------------
+      - name: Create labels
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          create_label() {
+            local name="$1" color="$2" description="$3"
+            echo "Creating label: $name"
+            gh label create "$name" --color "$color" --description "$description" --force
+          }
+
+          create_label "feature"        "0075ca" "New feature or enhancement"
+          create_label "bug"            "d73a4a" "Something isn't working"
+          create_label "content"        "e4e669" "Blog posts, portfolio entries, knowledge base content"
+          create_label "ui/ux"          "f9d0c4" "Frontend, design, and styling"
+          create_label "auth"           "bfd4f2" "User authentication and accounts"
+          create_label "infrastructure" "c5def5" "Hosting, CI/CD, database, deployment"
+          create_label "performance"    "0e8a16" "Speed and optimization"
+          create_label "seo"            "b60205" "Search engine optimization"
+          create_label "github-pages"   "24292f" "GitHub Pages configuration and deployment"
+          create_label "blocked"        "e11d48" "Waiting on a dependency"
+          create_label "good first issue" "7057ff" "Good for newcomers"
+
+          echo "✅ All labels created"
+
+      # -------------------------------------------------------
+      # MILESTONES
+      # -------------------------------------------------------
+      - name: Create milestones
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          create_milestone() {
+            local title="$1" description="$2"
+            echo "Creating milestone: $title"
+            gh api repos/$GH_REPO/milestones \
+              --method POST \
+              -f title="$title" \
+              -f description="$description" \
+              -f state="open" || echo "Milestone may already exist: $title"
+          }
+
+          create_milestone \
+            "M1 - Project Foundation" \
+            "Repo setup, tech stack decisions, CI/CD pipeline, GitHub Pages configuration, domain, and base app scaffolding"
+
+          create_milestone \
+            "M2 - Core Blog" \
+            "Blog post creation, markdown support, tagging, categories, RSS feed, and post listing/detail pages"
+
+          create_milestone \
+            "M3 - Portfolio" \
+            "Project showcase pages, case studies, featured work section, and media gallery"
+
+          create_milestone \
+            "M4 - Knowledge Base" \
+            "Note/article creation, search, hierarchical organization, linking between entries"
+
+          create_milestone \
+            "M5 - Auth & Admin" \
+            "User login (owner-only), admin dashboard for managing content, draft/publish workflow"
+
+          create_milestone \
+            "M6 - Polish & Launch" \
+            "SEO, performance optimization, analytics, mobile responsiveness, accessibility audit, and public launch to GitHub Pages"
+
+          echo "✅ All milestones created"
+
+      # -------------------------------------------------------
+      # ISSUES
+      # -------------------------------------------------------
+      - name: Create issues
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          # Helper: resolve milestone number by title
+          milestone_number() {
+            gh api repos/$GH_REPO/milestones --jq ".[] | select(.title == \"$1\") | .number"
+          }
+
+          # Helper: create an issue
+          create_issue() {
+            local title="$1" milestone_title="$2"
+            shift 2
+            local labels="$@"
+            local milestone
+            milestone=$(milestone_number "$milestone_title")
+            echo "Creating issue: $title (milestone: $milestone_title #$milestone)"
+            gh issue create \
+              --title "$title" \
+              --body "" \
+              --milestone "$milestone_title" \
+              --label "$labels"
+          }
+
+          # ------------------------------------------
+          # M1 - Project Foundation
+          # ------------------------------------------
+          M1="M1 - Project Foundation"
+
+          gh issue create --title "Choose and scaffold tech stack compatible with GitHub Pages (e.g. Next.js static export, Astro, Hugo, or Jekyll)" \
+            --body "Choose a static-site-generation framework that exports to flat HTML/CSS/JS and can be deployed to GitHub Pages. Options include Astro, Next.js (static export), Hugo, Jekyll, or Eleventy." \
+            --milestone "$M1" --label "feature,infrastructure,github-pages"
+
+          gh issue create --title "Configure GitHub Pages in repo settings (source branch, custom domain if applicable)" \
+            --body "Enable GitHub Pages in the repository Settings > Pages. Set the source to the \`gh-pages\` branch (or \`/docs\` on \`main\`). Configure a custom domain if desired." \
+            --milestone "$M1" --label "infrastructure,github-pages"
+
+          gh issue create --title "Set up GitHub Actions workflow to build and deploy to GitHub Pages on push to main" \
+            --body "Create a \`.github/workflows/deploy.yml\` workflow that builds the static site and deploys it to GitHub Pages whenever changes are pushed to \`main\`." \
+            --milestone "$M1" --label "infrastructure,github-pages"
+
+          gh issue create --title "Configure custom domain and HTTPS for GitHub Pages (CNAME file + DNS)" \
+            --body "Add a \`CNAME\` file to the repository root with the desired custom domain. Configure DNS A/CNAME records pointing to GitHub Pages IPs. Enforce HTTPS in repo settings." \
+            --milestone "$M1" --label "infrastructure,github-pages"
+
+          gh issue create --title "Set up environment variable management and secrets for Actions" \
+            --body "Document all required environment variables. Add any needed secrets (API keys, tokens) to the repository's GitHub Actions secrets." \
+            --milestone "$M1" --label "infrastructure"
+
+          gh issue create --title "Initialize project README and contribution guidelines" \
+            --body "Expand the README with project description, tech stack, local development instructions, and a link to the live site. Add a \`CONTRIBUTING.md\` with guidelines for contributions." \
+            --milestone "$M1" --label "feature"
+
+          # ------------------------------------------
+          # M2 - Core Blog
+          # ------------------------------------------
+          M2="M2 - Core Blog"
+
+          gh issue create --title "Design and implement blog post data model" \
+            --body "Define the schema/frontmatter for blog posts: title, slug, date, author, tags, categories, excerpt, cover image, published status." \
+            --milestone "$M2" --label "feature"
+
+          gh issue create --title "Build blog post listing page with pagination" \
+            --body "Create a \`/blog\` index page that lists all published posts with title, date, excerpt, and tags. Implement pagination (or infinite scroll)." \
+            --milestone "$M2" --label "feature,ui/ux"
+
+          gh issue create --title "Build individual blog post detail page" \
+            --body "Create a dynamic route (e.g. \`/blog/[slug]\`) that renders a full blog post with title, date, author, tags, body content, and navigation to previous/next posts." \
+            --milestone "$M2" --label "feature,ui/ux"
+
+          gh issue create --title "Add markdown/MDX rendering support" \
+            --body "Configure the chosen framework to parse and render Markdown or MDX files as blog posts. Support code syntax highlighting, images, links, and custom components." \
+            --milestone "$M2" --label "feature"
+
+          gh issue create --title "Implement tagging and category filtering" \
+            --body "Add tag and category pages (e.g. \`/blog/tag/[tag]\`, \`/blog/category/[cat]\`) that list posts filtered by the selected tag or category." \
+            --milestone "$M2" --label "feature"
+
+          gh issue create --title "Add RSS feed for blog" \
+            --body "Generate an RSS/Atom feed at \`/rss.xml\` or \`/feed.xml\` containing all published blog posts for feed readers and SEO." \
+            --milestone "$M2" --label "feature,seo"
+
+          gh issue create --title "Add estimated reading time to posts" \
+            --body "Calculate and display the estimated reading time (e.g. '5 min read') on blog post listing cards and the post detail page." \
+            --milestone "$M2" --label "feature,ui/ux"
+
+          gh issue create --title "Verify blog pages render correctly on GitHub Pages static export" \
+            --body "After the blog is implemented, test a full static export and deployment to GitHub Pages. Verify all routes, images, and links work correctly in the Pages environment." \
+            --milestone "$M2" --label "github-pages,infrastructure"
+
+          # ------------------------------------------
+          # M3 - Portfolio
+          # ------------------------------------------
+          M3="M3 - Portfolio"
+
+          gh issue create --title "Design portfolio project card component" \
+            --body "Design and build a reusable project card component showing project name, description, tech stack, thumbnail, and links (live site, GitHub repo)." \
+            --milestone "$M3" --label "feature,ui/ux"
+
+          gh issue create --title "Build portfolio listing page" \
+            --body "Create a \`/portfolio\` index page that displays all projects as a grid or list of project cards." \
+            --milestone "$M3" --label "feature,ui/ux"
+
+          gh issue create --title "Build individual project detail/case study page" \
+            --body "Create a \`/portfolio/[slug]\` route that renders a full project case study with description, screenshots, tech stack, challenges, and outcomes." \
+            --milestone "$M3" --label "feature,ui/ux"
+
+          gh issue create --title "Add featured projects section to homepage" \
+            --body "Add a 'Featured Projects' section to the homepage that highlights 2-4 selected portfolio projects with cards/thumbnails." \
+            --milestone "$M3" --label "feature,ui/ux"
+
+          gh issue create --title "Support images and media in portfolio entries" \
+            --body "Ensure the portfolio data model and rendering supports multiple images, embedded videos, and other media. Optimize images for web." \
+            --milestone "$M3" --label "feature"
+
+          # ------------------------------------------
+          # M4 - Knowledge Base
+          # ------------------------------------------
+          M4="M4 - Knowledge Base"
+
+          gh issue create --title "Design knowledge base data model and hierarchy" \
+            --body "Define the schema for knowledge base articles: title, slug, category, tags, body, related articles. Design the hierarchy (sections, subsections, articles)." \
+            --milestone "$M4" --label "feature"
+
+          gh issue create --title "Build knowledge base index/browse page" \
+            --body "Create a \`/kb\` or \`/notes\` index page that lets users browse all articles by category or topic, with a search box." \
+            --milestone "$M4" --label "feature,ui/ux"
+
+          gh issue create --title "Build individual knowledge base article page" \
+            --body "Create a \`/kb/[slug]\` route that renders a full article with title, body, tags, related links, and breadcrumb navigation." \
+            --milestone "$M4" --label "feature,ui/ux"
+
+          gh issue create --title "Implement full-text search across knowledge base (static/client-side)" \
+            --body "Integrate a client-side search solution (e.g. Fuse.js, Pagefind, or lunr.js) for full-text search across all knowledge base articles without a backend." \
+            --milestone "$M4" --label "feature"
+
+          gh issue create --title "Support internal linking between knowledge base entries" \
+            --body "Implement a way to link between knowledge base articles using shortcodes, wiki-style links (\`[[Article Title]]\`), or standard markdown links with slug resolution." \
+            --milestone "$M4" --label "feature"
+
+          gh issue create --title "Add table of contents to long articles" \
+            --body "Auto-generate a sticky table of contents sidebar or inline TOC from heading tags (H2, H3) for long knowledge base articles." \
+            --milestone "$M4" --label "feature,ui/ux"
+
+          # ------------------------------------------
+          # M5 - Auth & Admin
+          # ------------------------------------------
+          M5="M5 - Auth & Admin"
+
+          gh issue create --title "Implement owner-only login / authentication" \
+            --body "Set up authentication for the site owner only (not public users). Options: GitHub OAuth, NextAuth.js, Netlify Identity, or a simple magic-link approach. The login should gate access to admin functionality." \
+            --milestone "$M5" --label "feature,auth"
+
+          gh issue create --title "Build admin dashboard for content management" \
+            --body "Create a protected \`/admin\` dashboard where the owner can view, create, edit, and delete blog posts, portfolio entries, and knowledge base articles." \
+            --milestone "$M5" --label "feature,auth,ui/ux"
+
+          gh issue create --title "Add draft / publish workflow for all content types" \
+            --body "Allow content to be saved as a draft (not visible publicly) or published. The admin dashboard should show both states and allow toggling between them." \
+            --milestone "$M5" --label "feature,auth"
+
+          gh issue create --title "Protect admin routes with auth middleware" \
+            --body "Ensure all \`/admin/*\` routes redirect unauthenticated users to the login page. Implement middleware or route guards to enforce this." \
+            --milestone "$M5" --label "feature,auth"
+
+          gh issue create --title "Ensure admin/auth routes are excluded from GitHub Pages static export" \
+            --body "Since GitHub Pages serves static files, any server-side auth routes must NOT be included in the static export. Verify the build config excludes admin routes or handles them client-side only." \
+            --milestone "$M5" --label "auth,github-pages"
+
+          # ------------------------------------------
+          # M6 - Polish & Launch
+          # ------------------------------------------
+          M6="M6 - Polish & Launch"
+
+          gh issue create --title "Audit and implement on-page SEO (meta tags, OG, sitemap.xml, robots.txt)" \
+            --body "Add proper \`<title>\`, meta description, Open Graph, and Twitter Card tags to all pages. Generate a \`sitemap.xml\` and \`robots.txt\` at build time." \
+            --milestone "$M6" --label "seo"
+
+          gh issue create --title "Implement Google Analytics or privacy-first analytics" \
+            --body "Integrate an analytics solution. Options: Google Analytics 4, Plausible, Fathom, or Umami. Ensure it is GDPR-friendly and does not require a cookie consent banner if possible." \
+            --milestone "$M6" --label "feature"
+
+          gh issue create --title "Performance audit and optimization (Lighthouse)" \
+            --body "Run Google Lighthouse audits on all major pages. Target 90+ scores on Performance, Accessibility, Best Practices, and SEO. Optimize images, fonts, JS bundles, and caching headers." \
+            --milestone "$M6" --label "performance"
+
+          gh issue create --title "Ensure full mobile responsiveness across all pages" \
+            --body "Test and fix layout issues on mobile, tablet, and desktop breakpoints. Use responsive design patterns, flexible grids, and fluid typography." \
+            --milestone "$M6" --label "ui/ux"
+
+          gh issue create --title "Accessibility audit (WCAG 2.1 AA)" \
+            --body "Run an accessibility audit using axe, WAVE, or Lighthouse. Fix all critical and serious issues to meet WCAG 2.1 AA compliance: keyboard navigation, color contrast, ARIA labels, focus management." \
+            --milestone "$M6" --label "ui/ux"
+
+          gh issue create --title "Write end-to-end tests for critical user flows" \
+            --body "Add E2E tests (using Playwright or Cypress) for critical user flows: visiting the homepage, browsing blog posts, viewing a portfolio project, and searching the knowledge base." \
+            --milestone "$M6" --label "infrastructure"
+
+          gh issue create --title "Smoke test full site on GitHub Pages staging URL before go-live" \
+            --body "Deploy to the GitHub Pages staging URL (e.g. \`https://sagreenxyz.github.io/randomstuff2/\`) and manually smoke-test all pages, links, images, and interactive features before switching to the custom domain." \
+            --milestone "$M6" --label "github-pages,infrastructure"
+
+          gh issue create --title "Final pre-launch checklist and go-live on GitHub Pages" \
+            --body "Complete final pre-launch checklist: custom domain configured, HTTPS enforced, sitemap submitted to Google Search Console, analytics live, social previews tested. Announce go-live." \
+            --milestone "$M6" --label "infrastructure,github-pages"
+
+          echo "✅ All issues created"
+
+  setup-project-board:
+    name: Create GitHub Project Board (requires PROJECT_TOKEN)
+    runs-on: ubuntu-latest
+    needs: setup
+    permissions:
+      issues: read
+      contents: read
+
+    steps:
+      - name: Create SAGreenXYZ Roadmap project board
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN || secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          OWNER="${GH_REPO%%/*}"
+          REPO="${GH_REPO##*/}"
+
+          echo "Attempting to create GitHub Project (Projects v2) via GraphQL..."
+
+          # Create the project
+          PROJECT_DATA=$(gh api graphql -f query='
+            mutation($owner: String!, $title: String!) {
+              createProjectV2(input: {ownerId: $owner, title: $title}) {
+                projectV2 { id number url }
+              }
+            }' \
+            -f owner="$OWNER" \
+            -f title="SAGreenXYZ Roadmap" \
+            --jq '.data.createProjectV2.projectV2' 2>&1) || true
+
+          # Try with owner ID instead of login
+          OWNER_ID=$(gh api graphql -f query='
+            query($login: String!) {
+              user(login: $login) { id }
+            }' -f login="$OWNER" --jq '.data.user.id' 2>/dev/null || echo "")
+
+          if [ -n "$OWNER_ID" ]; then
+            PROJECT_RESULT=$(gh api graphql -f query='
+              mutation($ownerId: ID!, $title: String!) {
+                createProjectV2(input: {ownerId: $ownerId, title: $title}) {
+                  projectV2 { id number url }
+                }
+              }' \
+              -f ownerId="$OWNER_ID" \
+              -f title="SAGreenXYZ Roadmap" 2>&1) || true
+
+            PROJECT_ID=$(echo "$PROJECT_RESULT" | jq -r '.data.createProjectV2.projectV2.id' 2>/dev/null || echo "")
+            PROJECT_NUMBER=$(echo "$PROJECT_RESULT" | jq -r '.data.createProjectV2.projectV2.number' 2>/dev/null || echo "")
+            PROJECT_URL=$(echo "$PROJECT_RESULT" | jq -r '.data.createProjectV2.projectV2.url' 2>/dev/null || echo "")
+
+            if [ -n "$PROJECT_ID" ] && [ "$PROJECT_ID" != "null" ]; then
+              echo "✅ Project created: $PROJECT_URL"
+
+              # Add all open issues to the project
+              echo "Adding issues to project..."
+              gh issue list --state open --limit 100 --json number,id | \
+                jq -r '.[].id' | while read ISSUE_NODE_ID; do
+                  gh api graphql -f query='
+                    mutation($project: ID!, $contentId: ID!) {
+                      addProjectV2ItemById(input: {projectId: $project, contentId: $contentId}) {
+                        item { id }
+                      }
+                    }' \
+                    -f project="$PROJECT_ID" \
+                    -f contentId="$ISSUE_NODE_ID" > /dev/null 2>&1 || true
+                done
+              echo "✅ Issues added to project board"
+            else
+              echo "⚠️  Could not create project automatically. See instructions in .github/setup/project-board-instructions.md"
+              echo "GraphQL response: $PROJECT_RESULT"
+            fi
+          else
+            echo "⚠️  Could not resolve owner ID. See .github/setup/project-board-instructions.md for manual instructions."
+          fi
